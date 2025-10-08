@@ -1,0 +1,10 @@
+﻿# OS / Editor
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Node / Python / Build (if you add code later)
+node_modules/
+dist/
+.env
+__pycache__/
