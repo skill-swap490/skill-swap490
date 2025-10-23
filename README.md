@@ -5,17 +5,6 @@ SkillSwap is a cross-platform app (Web, iOS, Android) that helps people **learn 
 This repository contains the source code for our Senior Design project (COMP 490), built with **Flutter (Dart)** and backed by **Firebase**.
 
 ---
-
-## Getting Started
-
-### Run in GitHub Codespaces (Web)
-1. Open this repo in **Codespaces**.
-2. In the terminal, run:
-   ```bash
-   flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
-   ```
-3. Click the **Forwarded Port 8080** link to preview.
-
 ### Run Locally
 
 1. Install Flutter: [https://docs.flutter.dev/get-started/install](https://docs.flutter.dev/get-started/install)
