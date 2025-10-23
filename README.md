@@ -45,13 +45,13 @@ skill-swap490/
 
 For full technical details, see the **Wiki**:
 
-* **Wiki Home:** [https://github.com/jkalski/490-Senior-Design/wiki](https://github.com/jkalski/490-Senior-Design/wiki)
-* **Architecture Overview:** [https://github.com/jkalski/490-Senior-Design/wiki/Architecture-Overview](https://github.com/jkalski/490-Senior-Design/wiki/Architecture-Overview)
-* **Database Schema:** [https://github.com/jkalski/490-Senior-Design/wiki/Database-Schema](https://github.com/jkalski/490-Senior-Design/wiki/Database-Schema)
-* **Views (UI/UX):** [https://github.com/jkalski/490-Senior-Design/wiki/Views](https://github.com/jkalski/490-Senior-Design/wiki/Views)
-* **REST API & Controllers:** [https://github.com/jkalski/490-Senior-Design/wiki/REST-API-&-Controllers](https://github.com/jkalski/490-Senior-Design/wiki/REST-API-&-Controllers)
-* **Deployment Plan:** [https://github.com/jkalski/490-Senior-Design/wiki/Deployment](https://github.com/jkalski/490-Senior-Design/wiki/Deployment)
-* **Design Considerations:** [https://github.com/jkalski/490-Senior-Design/wiki/Design-Considerations](https://github.com/jkalski/490-Senior-Design/wiki/Design-Considerations)
+* **Wiki Home:** [https://github.com/skill-swap490/skill-swap490/wiki](https://github.com/skill-swap490/skill-swap490/wiki)
+* **Architecture Overview:** [https://github.com/skill-swap490/skill-swap490/wiki/Architecture-Overview](https://github.com/skill-swap490/skill-swap490/wiki/Architecture-Overview)
+* **Database Schema:** [https://github.com/skill-swap490/skill-swap490/wiki/Database-Schema](https://github.com/skill-swap490/skill-swap490/wiki/Database-Schema)
+* **Views (UI/UX):** [https://github.com/skill-swap490/skill-swap490/wiki/Views](https://github.com/skill-swap490/skill-swap490/wiki/Views)
+* **REST API & Controllers:** [https://github.com/skill-swap490/skill-swap490/wiki/REST-API-&-Controllers](https://github.com/skill-swap490/skill-swap490/wiki/REST-API-&-Controllers)
+* **Deployment Plan:** [https://github.com/skill-swap490/skill-swap490/wiki/Deployment](https://github.com/skill-swap490/skill-swap490/wiki/Deployment)
+* **Design Considerations:** [https://github.com/skill-swap490/skill-swap490/wiki/Design-Considerations](https://github.com/skill-swap490/skill-swap490/wiki/Design-Considerations)
 
 
 ---
