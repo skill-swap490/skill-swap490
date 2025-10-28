@@ -5,7 +5,6 @@ SkillSwap is a cross-platform app (Web, iOS, Android) that helps people **learn 
 This repository contains the source code for our Senior Design project (COMP 490), built with **Flutter (Dart)** and backed by **Firebase**.
 
 ---
-<<<<<<< HEAD
 =======
 
 ## Getting Started
@@ -18,7 +17,7 @@ This repository contains the source code for our Senior Design project (COMP 490
    ```
 3. Click the **Forwarded Port 8080** link to preview.
 
->>>>>>> personal-main
+
 ### Run Locally
 
 1. Install Flutter: [https://docs.flutter.dev/get-started/install](https://docs.flutter.dev/get-started/install)
@@ -59,7 +58,7 @@ skill-swap490/
 
 For full technical details, see the **Wiki**:
 
-<<<<<<< HEAD
+
 * **Wiki Home:** [https://github.com/skill-swap490/skill-swap490/wiki](https://github.com/skill-swap490/skill-swap490/wiki)
 * **Architecture Overview:** [https://github.com/skill-swap490/skill-swap490/wiki/Architecture-Overview](https://github.com/skill-swap490/skill-swap490/wiki/Architecture-Overview)
 * **Database Schema:** [https://github.com/skill-swap490/skill-swap490/wiki/Database-Schema](https://github.com/skill-swap490/skill-swap490/wiki/Database-Schema)
