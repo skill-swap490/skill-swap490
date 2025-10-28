@@ -74,15 +74,15 @@ For full technical details, see the **Wiki**:
 * **REST API & Controllers:** [https://github.com/jkalski/490-Senior-Design/wiki/REST-API-&-Controllers](https://github.com/jkalski/490-Senior-Design/wiki/REST-API-&-Controllers)
 * **Deployment Plan:** [https://github.com/jkalski/490-Senior-Design/wiki/Deployment](https://github.com/jkalski/490-Senior-Design/wiki/Deployment)
 * **Design Considerations:** [https://github.com/jkalski/490-Senior-Design/wiki/Design-Considerations](https://github.com/jkalski/490-Senior-Design/wiki/Design-Considerations)
->>>>>>> personal-main
+
 
 
 ---
 
 ## Team
 
-* Talin Keshesh — Backend Functions & Auth
+* Talin Keshesh — Lead Frontend & Integrations
 * Sako Asatryan — Data Models & Chat
 * Zakir Rizvi — CI/CD & Testing
 * BachViet Nguyen — Search/AI & Location Services
-* Justin Kalski — Lead Frontend & Integrations
+* Justin Kalski — Backend Functions & Auth
