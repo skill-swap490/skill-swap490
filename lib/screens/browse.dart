@@ -34,7 +34,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
         children: [
           const Expanded(
             child: Text(
-              'Discover Skill Swaps',
+              'Discover Skill Swaps123',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
