@@ -30,9 +30,19 @@ class MyApp extends StatelessWidget {
       title: 'SkillSwap',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF38BDF8)),
-        useMaterial3: true,
+        primarySwatch: Colors.indigo,
+        scaffoldBackgroundColor: const Color(0xFFF7F9FC),
         fontFamily: 'Roboto',
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Colors.black87),
+          titleTextStyle: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+        ),
       ),
       home: const IntroScreen(),
       routes: {

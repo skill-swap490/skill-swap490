@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'profile_setup.dart';
 import 'category_results.dart';
 
-
 class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
 
@@ -16,42 +15,63 @@ class _BrowseScreenState extends State<BrowseScreen> {
   String _searchQuery = '';
   String? _selectedCategoryId;
 
+  // 🔹 NEW: the header bar that matches your HTML screenshot
+  Widget _buildDiscoverHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            offset: Offset(0, 1),
+            blurRadius: 2,
+            spreadRadius: 0,
+            color: Color(0x14000000), // light bottom shadow
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Discover Skill Swaps',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          IconButton(
+            splashRadius: 20,
+            tooltip: 'My profile',
+            icon: const Icon(
+              Icons.person_outline,
+              color: Colors.black,
+            ),
+            onPressed: _onMyProfileTap,
+          ),
+        ],
+      ),
+    );
+  }
+
   // Same category IDs as profile setup
   static const List<Map<String, String>> _allOfferCategories = [
     {'id': 'technical', 'label': 'Technical'},
     {'id': 'creative', 'label': 'Creative / Artistic'},
     {'id': 'academic', 'label': 'Academic / Educational'},
     {'id': 'business', 'label': 'Business / Professional'},
-    {'id': 'trades', 'label': 'Trades / Hands-On'},
-    {'id': 'lifestyle', 'label': 'Lifestyle & Personal Dev'},
-    {'id': 'social', 'label': 'Social & Community'},
-    {'id': 'digital_content', 'label': 'Digital Content / Social Media'},
-    {'id': 'career', 'label': 'Career & Tech Advancement'},
+    {'id': 'life', 'label': 'Life Skills / Personal'},
+    {'id': 'fitness', 'label': 'Fitness / Sports'},
+    {'id': 'music', 'label': 'Music'},
+    {'id': 'language', 'label': 'Languages'},
+    {'id': 'other', 'label': 'Other'},
   ];
 
-  static const Map<String, IconData> _categoryIcons = {
-    'technical': Icons.code,
-    'creative': Icons.palette_rounded,
-    'academic': Icons.menu_book_rounded,
-    'business': Icons.business_center_rounded,
-    'trades': Icons.handyman_rounded,
-    'lifestyle': Icons.self_improvement_rounded,
-    'social': Icons.people_alt_rounded,
-    'digital_content': Icons.smartphone_rounded,
-    'career': Icons.trending_up_rounded,
-  };
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   void _onMyProfileTap() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('You need to be signed in to view your profile.'),
-        ),
-      );
-      return;
-    }
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => const ProfileSetupScreen(),
@@ -59,17 +79,45 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-void _onCategoryTap(String id, String label) {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => CategoryResultsScreen(
-        categoryId: id,
-        categoryLabel: label,
+  void _onCategoryTap(String id, String label) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CategoryResultsScreen(
+          categoryId: id,
+          categoryLabel: label,
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
+  Stream<QuerySnapshot> _recommendedMatchesStream() {
+    final user = _auth.currentUser;
+    if (user == null) {
+      return const Stream.empty();
+    }
+
+    final docRef =
+        FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    return docRef.snapshots().switchMap((snapshot) {
+      final data = snapshot.data();
+      if (data == null) {
+        return const Stream.empty();
+      }
+
+      final myOffers = List<String>.from(data['offerCategories'] ?? []);
+      final myWants = List<String>.from(data['wantCategories'] ?? []);
+
+      if (myOffers.isEmpty && myWants.isEmpty) {
+        return const Stream.empty();
+      }
+
+      return FirebaseFirestore.instance
+          .collection('users')
+          .where(FieldPath.documentId, isNotEqualTo: user.uid)
+          .snapshots();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +149,10 @@ void _onCategoryTap(String id, String label) {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 🔹 NEW: inline header bar between app bar and search
+            _buildDiscoverHeader(),
+            const SizedBox(height: 8),
+
             // 🔍 Search Bar (UI only for now)
             TextField(
               decoration: InputDecoration(
@@ -157,255 +209,135 @@ void _onCategoryTap(String id, String label) {
               children: _allOfferCategories.map((cat) {
                 final id = cat['id']!;
                 final label = cat['label']!;
-                final icon = _categoryIcons[id] ?? Icons.category_rounded;
                 final isSelected = _selectedCategoryId == id;
 
-                return CategoryTile(
-                  icon: icon,
-                  label: label,
-                  selected: isSelected,
-                  onTap: () => _onCategoryTap(id, label),
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedCategoryId = id;
+                    });
+                    _onCategoryTap(id, label);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.blue.shade50
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.blue.shade400
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                    padding: const EdgeInsets.all(10),
+                    child: Center(
+                      child: Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected
+                              ? Colors.blue.shade700
+                              : Colors.grey.shade800,
+                        ),
+                      ),
+                    ),
+                  ),
                 );
               }).toList(),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
             Text(
-              "Tap a category to see people who offer skills in that area.",
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 13,
+              "Recommended matches (early prototype)",
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade900,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ===================== CATEGORY TILE =====================
-
-class CategoryTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const CategoryTile({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final baseColor = Colors.blue.shade600;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: selected ? baseColor.withOpacity(0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? baseColor : Colors.grey.shade200,
-            width: selected ? 1.5 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 26,
-              color: selected ? baseColor : Colors.blue.shade600,
             ),
             const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
+            const Text(
+              "These are other users who might have overlapping offers and wants. Matching logic will get smarter later.",
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: selected ? Colors.black : Colors.grey.shade800,
+                color: Colors.black54,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            )
+            ),
+            const SizedBox(height: 12),
+
+            StreamBuilder<QuerySnapshot>(
+              stream: _recommendedMatchesStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      "Once more people set up their profiles, you'll see suggested matches here.",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  );
+                }
+
+                final docs = snapshot.data!.docs;
+
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: docs.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final userDoc = docs[index];
+                    return _buildUserMatchCard(userDoc);
+                  },
+                );
+              },
+            ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),
     );
   }
-}
 
-// ===================== CATEGORY RESULTS SCREEN =====================
+  Widget _buildUserMatchCard(DocumentSnapshot userDoc) {
+    final data = userDoc.data() as Map<String, dynamic>? ?? {};
+    final displayName =
+        (data['displayName'] ?? 'Skill Swap user') as String;
+    final bio = (data['bio'] ?? '') as String;
+    final location = (data['location'] ?? '') as String;
+    final offers = List<String>.from(data['offerCategories'] ?? []);
+    final wants = List<String>.from(data['wantCategories'] ?? []);
 
-class CategoryResultsScreen extends StatelessWidget {
-  final String categoryId;
-  final String categoryLabel;
+    final initials = _getInitials(displayName);
 
-  const CategoryResultsScreen({
-    super.key,
-    required this.categoryId,
-    required this.categoryLabel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FC),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Text(
-          categoryLabel,
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text('Failed to load users. Please try again.'),
-            );
-          }
-
-          final docs = snapshot.data?.docs ?? [];
-
-          final filtered = docs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final offersDynamic =
-                data['offers'] as List<dynamic>? ?? [];
-            final offers =
-                offersDynamic.whereType<Map<String, dynamic>>().toList();
-
-            if (offers.isEmpty) return false;
-
-            final hasCategory = offers.any((offer) {
-              final cat = (offer['category'] ?? '').toString().trim();
-              return cat == categoryId;
-            });
-
-            return hasCategory;
-          }).toList();
-
-          if (filtered.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Text(
-                  'No one has listed skills in "$categoryLabel" yet.\nCheck back soon!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            );
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final doc = filtered[index];
-              final data = doc.data() as Map<String, dynamic>;
-
-              final firstName =
-                  (data['firstName'] ?? '').toString().trim();
-              final lastName =
-                  (data['lastName'] ?? '').toString().trim();
-              final fullName = (firstName.isEmpty && lastName.isEmpty)
-                  ? 'Unnamed user'
-                  : '$firstName $lastName';
-
-              final offersDynamic =
-                  data['offers'] as List<dynamic>? ?? [];
-              final offers =
-                  offersDynamic.whereType<Map<String, dynamic>>().toList();
-
-              // Only keep offers in this category for display
-              final categoryOffers = offers.where((offer) {
-                final cat = (offer['category'] ?? '').toString().trim();
-                return cat == categoryId;
-              }).toList();
-
-              return UserSkillCard(
-                name: fullName,
-                offers: categoryOffers,
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ===================== USER SKILL CARD =====================
-
-class UserSkillCard extends StatelessWidget {
-  final String name;
-  final List<Map<String, dynamic>> offers;
-
-  const UserSkillCard({
-    super.key,
-    required this.name,
-    required this.offers,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    // Take first 3 skills for chips
-    final topOffers = offers.take(3).toList();
-
-    // Use first offer description as preview if available
-    String? firstDescription;
-    if (offers.isNotEmpty) {
-      final raw = offers.first['description']?.toString().trim() ?? '';
-      if (raw.isNotEmpty) {
-        firstDescription = raw;
-      }
+    final String? firstDescription;
+    if (offers.isNotEmpty && wants.isNotEmpty) {
+      firstDescription =
+          "Can help with ${offers.first}, wants to learn ${wants.first}.";
+    } else if (offers.isNotEmpty) {
+      firstDescription = "Can help with ${offers.first}.";
+    } else if (wants.isNotEmpty) {
+      firstDescription = "Wants to learn ${wants.first}.";
+    } else {
+      firstDescription = null;
     }
-
-    String initials = '';
-    final parts = name.split(' ');
-    if (parts.isNotEmpty) {
-      initials = parts[0].isNotEmpty ? parts[0][0] : '';
-      if (parts.length > 1 && parts[1].isNotEmpty) {
-        initials += parts[1][0];
-      }
-    }
-    initials = initials.toUpperCase();
 
     return Container(
       decoration: BoxDecoration(
@@ -414,121 +346,140 @@ class UserSkillCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          )
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       padding: const EdgeInsets.all(14),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top row: avatar + name
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: Colors.blue.shade100,
-                child: Text(
-                  initials.isEmpty ? 'S' : initials,
-                  style: TextStyle(
-                    color: Colors.blue.shade800,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: Colors.blue.shade50,
+            child: Text(
+              initials,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.blue.shade700,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
                     fontSize: 16,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          if (topOffers.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: topOffers.map((offer) {
-                final skillName =
-                    (offer['name'] ?? '').toString().trim();
-                final level =
-                    (offer['level'] ?? '').toString().trim();
-                final label =
-                    level.isEmpty ? skillName : '$skillName • $level';
-
-                return Chip(
-                  label: Text(
-                    label,
-                    style: const TextStyle(fontSize: 12),
+                if (location.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 16,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  backgroundColor: Colors.blue.shade50,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                );
-              }).toList(),
-            )
-          else
-            Text(
-              'No skills listed yet.',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 13,
-              ),
-            ),
-
-          if (firstDescription != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              firstDescription,
-              style: TextStyle(
-                color: Colors.grey.shade800,
-                fontSize: 13,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-
-          const SizedBox(height: 10),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.swap_horiz_rounded,
-                      size: 18, color: Colors.blue.shade600),
-                  const SizedBox(width: 6),
+                ],
+                if (bio.isNotEmpty) ...[
+                  const SizedBox(height: 6),
                   Text(
-                    "Open to swap",
-                    style: TextStyle(
+                    bio,
+                    style: const TextStyle(
                       fontSize: 13,
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.w500,
+                      color: Colors.black87,
                     ),
                   ),
                 ],
-              ),
-              TextButton(
-                onPressed: () {
-                  // Later: navigate to full profile / send request
-                },
-                child: const Text('View details'),
-              ),
-            ],
+                if (firstDescription != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    firstDescription,
+                    style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontSize: 13,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+
+                const SizedBox(height: 10),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: -4,
+                      children: [
+                        ...offers.take(2).map(
+                          (o) => Chip(
+                            label: Text(
+                              o,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                        ...wants.take(2).map(
+                          (w) => Chip(
+                            label: Text(
+                              w,
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        // Later: navigate to full profile / send request
+                      },
+                      child: const Text('View details'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+
+  String _getInitials(String name) {
+    var initials = '';
+    final parts = name.trim().split(' ');
+    if (parts.isNotEmpty) {
+      initials = parts[0].isNotEmpty ? parts[0][0] : '';
+      if (parts.length > 1 && parts[1].isNotEmpty) {
+        initials += parts[1][0];
+      }
+    }
+    return initials.toUpperCase();
   }
 }
