@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'profile_setup.dart';
 import 'category_results.dart';
 
@@ -15,7 +16,58 @@ class _BrowseScreenState extends State<BrowseScreen> {
   String _searchQuery = '';
   String? _selectedCategoryId;
 
-  // 🔹 NEW: the header bar that matches your HTML screenshot
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Same category IDs as profile setup (keep IDs in sync with your backend)
+  static const List<Map<String, String>> _allOfferCategories = [
+    {'id': 'technical', 'label': 'Technical'},
+    {'id': 'creative', 'label': 'Creative / Artistic'},
+    {'id': 'academic', 'label': 'Academic / Educational'},
+    {'id': 'business', 'label': 'Business / Professional'},
+    {'id': 'life', 'label': 'Life Skills / Personal'},
+    {'id': 'fitness', 'label': 'Fitness / Sports'},
+    {'id': 'music', 'label': 'Music'},
+    {'id': 'language', 'label': 'Languages'},
+    {'id': 'other', 'label': 'Other'},
+  ];
+
+  void _onMyProfileTap() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const ProfileSetupScreen(),
+      ),
+    );
+  }
+
+  void _onCategoryTap(String id, String label) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CategoryResultsScreen(
+          categoryId: id,
+          categoryLabel: label,
+        ),
+      ),
+    );
+  }
+
+  /// 🔹 Simple prototype recommended matches stream:
+  /// currently: "all other users", filtered later by logic if needed.
+  Stream<QuerySnapshot> _recommendedMatchesStream() {
+    final user = _auth.currentUser;
+    if (user == null) {
+      return const Stream.empty();
+    }
+
+    return FirebaseFirestore.instance
+        .collection('users')
+        .where(FieldPath.documentId, isNotEqualTo: user.uid)
+        .snapshots();
+  }
+
+  /// 🔹 This is the HTML → Dart conversion you asked for.
+  /// It matches the bar in your screenshot:
+  /// "Discover Skill Swaps" on the left, profile icon on the right,
+  /// white background, thin shadow.
   Widget _buildDiscoverHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -56,69 +108,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
     );
   }
 
-  // Same category IDs as profile setup
-  static const List<Map<String, String>> _allOfferCategories = [
-    {'id': 'technical', 'label': 'Technical'},
-    {'id': 'creative', 'label': 'Creative / Artistic'},
-    {'id': 'academic', 'label': 'Academic / Educational'},
-    {'id': 'business', 'label': 'Business / Professional'},
-    {'id': 'life', 'label': 'Life Skills / Personal'},
-    {'id': 'fitness', 'label': 'Fitness / Sports'},
-    {'id': 'music', 'label': 'Music'},
-    {'id': 'language', 'label': 'Languages'},
-    {'id': 'other', 'label': 'Other'},
-  ];
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  void _onMyProfileTap() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const ProfileSetupScreen(),
-      ),
-    );
-  }
-
-  void _onCategoryTap(String id, String label) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => CategoryResultsScreen(
-          categoryId: id,
-          categoryLabel: label,
-        ),
-      ),
-    );
-  }
-
-  Stream<QuerySnapshot> _recommendedMatchesStream() {
-    final user = _auth.currentUser;
-    if (user == null) {
-      return const Stream.empty();
-    }
-
-    final docRef =
-        FirebaseFirestore.instance.collection('users').doc(user.uid);
-
-    return docRef.snapshots().switchMap((snapshot) {
-      final data = snapshot.data();
-      if (data == null) {
-        return const Stream.empty();
-      }
-
-      final myOffers = List<String>.from(data['offerCategories'] ?? []);
-      final myWants = List<String>.from(data['wantCategories'] ?? []);
-
-      if (myOffers.isEmpty && myWants.isEmpty) {
-        return const Stream.empty();
-      }
-
-      return FirebaseFirestore.instance
-          .collection('users')
-          .where(FieldPath.documentId, isNotEqualTo: user.uid)
-          .snapshots();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -149,11 +138,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔹 NEW: inline header bar between app bar and search
+            // 🔹 New header bar that mirrors your HTML screenshot
             _buildDiscoverHeader(),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
 
-            // 🔍 Search Bar (UI only for now)
+            // 🔍 Search Bar
             TextField(
               decoration: InputDecoration(
                 hintText: "Search people or skills... (coming soon)",
@@ -161,8 +150,10 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   color: Colors.grey.shade600,
                   fontSize: 15,
                 ),
-                prefixIcon:
-                    Icon(Icons.search_rounded, color: Colors.grey.shade600),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: Colors.grey.shade600,
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -193,7 +184,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
               "Browse by category",
               style: theme.textTheme.titleMedium?.copyWith(
                 fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: Colors.grey.shade900,
               ),
             ),
@@ -221,12 +212,12 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? Colors.blue.shade50
+                          ? Colors.indigo.withOpacity(0.1)
                           : Colors.white,
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: isSelected
-                            ? Colors.blue.shade400
+                            ? Colors.indigo
                             : Colors.grey.shade300,
                       ),
                     ),
@@ -239,7 +230,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: isSelected
-                              ? Colors.blue.shade700
+                              ? Colors.indigo
                               : Colors.grey.shade800,
                         ),
                       ),
@@ -327,7 +318,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
     final initials = _getInitials(displayName);
 
-    final String? firstDescription;
+    String? firstDescription;
     if (offers.isNotEmpty && wants.isNotEmpty) {
       firstDescription =
           "Can help with ${offers.first}, wants to learn ${wants.first}.";
@@ -335,8 +326,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
       firstDescription = "Can help with ${offers.first}.";
     } else if (wants.isNotEmpty) {
       firstDescription = "Wants to learn ${wants.first}.";
-    } else {
-      firstDescription = null;
     }
 
     return Container(
@@ -357,13 +346,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
         children: [
           CircleAvatar(
             radius: 26,
-            backgroundColor: Colors.blue.shade50,
+            backgroundColor: Colors.indigo.withOpacity(0.08),
             child: Text(
               initials,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
                 fontSize: 18,
-                color: Colors.blue.shade700,
+                color: Colors.indigo,
               ),
             ),
           ),
@@ -415,53 +404,51 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   const SizedBox(height: 6),
                   Text(
                     firstDescription,
-                    style: TextStyle(
-                      color: Colors.grey.shade800,
+                    style: const TextStyle(
+                      color: Colors.black87,
                       fontSize: 13,
                     ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-
-                const SizedBox(height: 10),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: -4,
                   children: [
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: -4,
-                      children: [
-                        ...offers.take(2).map(
-                          (o) => Chip(
-                            label: Text(
-                              o,
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                            padding: EdgeInsets.zero,
-                            visualDensity: VisualDensity.compact,
-                          ),
+                    ...offers.take(2).map(
+                      (o) => Chip(
+                        label: Text(
+                          o,
+                          style: const TextStyle(fontSize: 11),
                         ),
-                        ...wants.take(2).map(
-                          (w) => Chip(
-                            label: Text(
-                              w,
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                            padding: EdgeInsets.zero,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                        ),
-                      ],
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        // Later: navigate to full profile / send request
-                      },
-                      child: const Text('View details'),
+                    ...wants.take(2).map(
+                      (w) => Chip(
+                        label: Text(
+                          w,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      // Later: open chat / swap request
+                    },
+                    icon: const Icon(Icons.message_outlined, size: 18),
+                    label: const Text('Say hi'),
+                  ),
                 ),
               ],
             ),
