@@ -81,7 +81,7 @@ void _onCategoryTap(String id, String label) {
         backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Discover Skill Swaps123',
+          'Discover Skill Swaps',
           style: TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.w600,
